@@ -29,7 +29,7 @@ def load_model(device):
     return model
 
 
-def predict_image(path, model, preprocess, classes, device):
+def predict_image(path, model, preprocess, classes, device, topk=5):
 
     # 1) Load image
     img = load_image(path)
@@ -50,14 +50,14 @@ def predict_image(path, model, preprocess, classes, device):
     # 6) soft max
     probs = F.softmax(output, dim=1)
 
-    # 7) top-5
-    top5_prob, top5_idx = torch.topk(probs, 5, dim=1)
+    # 7) top-k
+    topk_prob, topk_idx = torch.topk(probs, topk, dim=1)
 
     # 8) map results to class names and return
     results = []
-    for i in range(5):
-        label = classes[top5_idx[0][i]]
-        prob = top5_prob[0][i].item()
+    for i in range(topk):
+        label = classes[topk_idx[0][i]]
+        prob = topk_prob[0][i].item()
         results.append((label, prob))
 
     return results

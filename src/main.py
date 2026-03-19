@@ -32,7 +32,7 @@ def main():
     url = "https://raw.githubusercontent.com/pytorch/hub/master/imagenet_classes.txt"
     classes = urllib.request.urlopen(url).read().decode("utf-8").splitlines()
 
-    results = predict_image(args.image, model, preprocess, classes, device)
+    results = predict_image(args.image, model, preprocess, classes, device, args.topk)
 
     for label, prob in results:
         print(f"{label}: {prob*100:.4f}%")
