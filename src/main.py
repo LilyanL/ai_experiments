@@ -13,7 +13,19 @@ def main():
 
     args = parser.parse_args()
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.cuda.is_available():
+        major, minor = torch.cuda.get_device_capability()
+        if (major, minor) >= (7, 0):
+            device = torch.device("cuda")
+        else:
+            print(
+                f"GPU detected (compute capability {major}.{minor}) "
+                "but not supported by the installed PyTorch build. Falling back to CPU."
+            )
+            device = torch.device("cpu")
+    else:
+        device = torch.device("cpu")
+
     model = load_model(device)
     preprocess = build_preprocess()
 
