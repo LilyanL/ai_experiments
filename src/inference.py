@@ -25,6 +25,32 @@ def build_preprocess():
         )
     ])
 
+def resolve_device(device_arg):
+    if device_arg == "cpu":
+        return torch.device("cpu")
+
+    if device_arg == "cuda":
+        if not torch.cuda.is_available():
+            raise RuntimeError("CUDA requested but not available.")
+        major, minor = torch.cuda.get_device_capability()
+        if (major, minor) < (7, 0):
+            raise RuntimeError(
+                f"CUDA requested but GPU compute capability {major}.{minor} "
+                "is not supported by this PyTorch build."
+            )
+        return torch.device("cuda")
+
+    # auto
+    if torch.cuda.is_available():
+        major, minor = torch.cuda.get_device_capability()
+        if (major, minor) >= (7, 0):
+            return torch.device("cuda")
+        print(
+            f"GPU detected (compute capability {major}.{minor}) "
+            "but not supported by the installed PyTorch build. Falling back to CPU."
+        )
+    return torch.device("cpu")
+
 def load_model(device):
     weights = ResNet18_Weights.DEFAULT
     model = resnet18(weights=weights)
@@ -38,12 +64,9 @@ def predict_image(path, model, preprocess, classes, device, topk=5):
     # 1) Load image
     img = load_image(path)
 
-    # 2) Preprocess image
+    # 2) Preprocess image & 3) Add batch
     input_batch = preprocess(img).unsqueeze(0).to(device)
-
-    # 3) Add batch
-    #input_batch = input_tensor.unsqueeze(0)
-
+    
     # 4) Move to device
     input_batch = input_batch.to(device)
 

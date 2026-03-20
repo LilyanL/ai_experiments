@@ -2,7 +2,7 @@ import argparse
 import torch
 import urllib
 
-from inference import load_model, build_preprocess, predict_image
+from inference import load_model, build_preprocess, predict_image, resolve_device
 
 
 
@@ -15,37 +15,16 @@ def main():
 
     args = parser.parse_args()
 
-    if args.device == "cpu":
-        device = torch.device("cpu")
+    try:
+        device = resolve_device(args.device)
+        model = load_model(device)
+        preprocess = build_preprocess()
+        results = predict_image(args.image, model, preprocess, classes, device, topk=args.topk)
+    except Exception as e:
+        print(e)
+        return
 
-    if args.device == "cuda":
-        if not torch.cuda.is_available():
-            raise RuntimeError("CUDA requested but not available.")
-        major, minor = torch.cuda.get_device_capability()
-        if (major, minor) < (7, 0):
-            raise RuntimeError(
-                f"CUDA requested but GPU compute capability {major}.{minor} "
-                "is not supported by this PyTorch build."
-            )
-        device = torch.device("cuda")
-            
-    else: # auto
-        if torch.cuda.is_available():
-            major, minor = torch.cuda.get_device_capability()
-            if (major, minor) >= (7, 0):
-                device = torch.device("cuda")
-            else:
-                print(
-                    f"GPU detected (compute capability {major}.{minor}) "
-                    "but not supported by the installed PyTorch build. Falling back to CPU."
-                )
-                device = torch.device("cpu")
-        else:
-            device = torch.device("cpu")
-
-    model = load_model(device)
-    preprocess = build_preprocess()
-
+    #TODO: move this to a separate function
     url = "https://raw.githubusercontent.com/pytorch/hub/master/imagenet_classes.txt"
     classes = urllib.request.urlopen(url).read().decode("utf-8").splitlines()
 
