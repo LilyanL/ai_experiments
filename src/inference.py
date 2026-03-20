@@ -6,6 +6,10 @@ from torchvision.models import resnet18, ResNet18_Weights
 
 def load_image(path):
     img = cv2.imread(path)
+
+    if img is None:
+        raise ValueError(f"Error: image not found: {path}")
+
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     return img
 
