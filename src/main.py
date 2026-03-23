@@ -2,7 +2,7 @@ import argparse
 import torch
 import urllib
 
-from inference import load_model, build_preprocess, predict_image, resolve_device
+from inference import load_classes, load_model, build_preprocess, predict_image, resolve_device
 
 
 
@@ -24,9 +24,7 @@ def main():
         print(e)
         return
 
-    #TODO: move this to a separate function
-    url = "https://raw.githubusercontent.com/pytorch/hub/master/imagenet_classes.txt"
-    classes = urllib.request.urlopen(url).read().decode("utf-8").splitlines()
+    classes = load_classes()
 
     try:
         results = predict_image(args.image, model, preprocess, classes, device, args.topk)

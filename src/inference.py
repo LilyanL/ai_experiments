@@ -3,6 +3,9 @@ import torch
 import torch.nn.functional as F
 from torchvision import transforms
 from torchvision.models import resnet18, ResNet18_Weights
+import urllib.request
+
+IMAGENET_CLASSES_URL = "https://raw.githubusercontent.com/pytorch/hub/master/imagenet_classes.txt"
 
 def load_image(path):
     img = cv2.imread(path)
@@ -58,6 +61,12 @@ def load_model(device):
     model.to(device)
     return model
 
+def load_classes():
+    try:
+        classes = urllib.request.urlopen(IMAGENET_CLASSES_URL).read().decode("utf-8").splitlines()
+    except Exception as e:
+        raise RuntimeError("Failed to load ImageNet classes") from e
+    return classes
 
 def predict_image(path, model, preprocess, classes, device, topk=5):
 
