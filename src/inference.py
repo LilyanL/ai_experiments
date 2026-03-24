@@ -4,8 +4,10 @@ import torch.nn.functional as F
 from torchvision import transforms
 from torchvision.models import resnet18, ResNet18_Weights
 import urllib.request
+import os
 
 IMAGENET_CLASSES_URL = "https://raw.githubusercontent.com/pytorch/hub/master/imagenet_classes.txt"
+VALID_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
 
 def load_image(path):
     img = cv2.imread(path)
@@ -15,6 +17,24 @@ def load_image(path):
 
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     return img
+
+def load_folder_images(folder_path):
+    if not os.path.isdir(folder_path):
+        raise ValueError(f"Error: folder not found: {folder_path}")
+
+    images = []
+    for filename in os.listdir(folder_path):
+        if filename.lower().endswith(VALID_EXTENSIONS):
+            img_path = os.path.join(folder_path, filename)
+            img = load_image(img_path)
+            images.append((filename, img))
+    
+    if not images:
+        raise ValueError(f"Error: no valid images found in folder: {folder_path}")
+    
+    images = sorted(images)
+
+    return images
 
 def build_preprocess():
     return transforms.Compose([
