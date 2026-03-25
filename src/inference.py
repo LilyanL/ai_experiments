@@ -123,9 +123,6 @@ def predict_image(path, model, preprocess, classes, device, topk=5):
 def predict_batch(images, model, preprocess, classes, device, topk=5):
     results = []
     
-    print("Starting batch prediction for", len(images), "images...")
-
-    print("Images should be of type (filename, image_data) and are currently of type:", type(images[0]), "with filename type:", type(images[0][0]), "and image data type:", type(images[0][1]))
     # 1) Load and preprocess images, then stack into a batch
     input_batch = []
     for filename in images:
@@ -134,10 +131,8 @@ def predict_batch(images, model, preprocess, classes, device, topk=5):
         input_tensor = preprocess(img)
         input_batch.append(input_tensor)
 
-    print("Preprocessed all images. Stacking into batch...")
     input_batch = torch.stack(input_batch).to(device)
 
-    print("Stacked input batch shape:", input_batch.shape)
     with torch.no_grad():
         output = model(input_batch)
 
@@ -145,7 +140,6 @@ def predict_batch(images, model, preprocess, classes, device, topk=5):
     probs = F.softmax(output, dim=1)
 
     # 3) top-k
-    print("Searching for top-k predictions...")
     topk_prob, topk_idx = torch.topk(probs, topk, dim=1)
 
     # 4) map results to class names and return
