@@ -18,16 +18,17 @@ def load_image(path):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     return img
 
-def load_folder_images(folder_path):
+def load_folder_images_paths(folder_path):
     if not os.path.isdir(folder_path):
         raise ValueError(f"Error: folder not found: {folder_path}")
 
-    images = []
+    images_paths = []
     for filename in os.listdir(folder_path):
         if filename.lower().endswith(VALID_EXTENSIONS):
             img_path = os.path.join(folder_path, filename)
-            img = load_image(img_path)
-            images.append((filename, img))
+            images_paths.append(img_path)
+
+    return images_paths
     
     if not images:
         raise ValueError(f"Error: no valid images found in folder: {folder_path}")
@@ -115,5 +116,46 @@ def predict_image(path, model, preprocess, classes, device, topk=5):
         label = classes[topk_idx[0][i]]
         prob = topk_prob[0][i].item()
         results.append((label, prob))
+
+    return results
+
+
+def predict_batch(images, model, preprocess, classes, device, topk=5):
+    results = []
+    
+    print("Starting batch prediction for", len(images), "images...")
+
+    print("Images should be of type (filename, image_data) and are currently of type:", type(images[0]), "with filename type:", type(images[0][0]), "and image data type:", type(images[0][1]))
+    # 1) Load and preprocess images, then stack into a batch
+    input_batch = []
+    for filename in images:
+
+        img = load_image(filename)
+        input_tensor = preprocess(img)
+        input_batch.append(input_tensor)
+
+    print("Preprocessed all images. Stacking into batch...")
+    input_batch = torch.stack(input_batch).to(device)
+
+    print("Stacked input batch shape:", input_batch.shape)
+    with torch.no_grad():
+        output = model(input_batch)
+
+    # 2) soft max
+    probs = F.softmax(output, dim=1)
+
+    # 3) top-k
+    print("Searching for top-k predictions...")
+    topk_prob, topk_idx = torch.topk(probs, topk, dim=1)
+
+    # 4) map results to class names and return
+    for i in range(len(images)):
+        filename = images[i]
+        img_results = []
+        for j in range(topk):
+            label = classes[topk_idx[i][j]]
+            prob = topk_prob[i][j].item()
+            img_results.append((label, prob))
+        results.append((filename, img_results))
 
     return results

@@ -2,7 +2,7 @@ import argparse
 import torch
 import urllib
 
-from inference import load_image, load_folder_images, build_preprocess, resolve_device, load_model, load_classes, predict_image
+from inference import load_folder_images_paths, load_image, build_preprocess, resolve_device, load_model, load_classes, predict_image, predict_batch
 
 
 
@@ -31,12 +31,9 @@ def main():
 
         elif args.folder:
             print(f"Loading images from folder: {args.folder}")
-            images = load_folder_images(args.folder)
-            results = []
-            for filename, img in images:
-                print(f"Processing {filename}...")
-                img_results = predict_image(args.folder + "/" + filename, model, preprocess, classes, device, topk=args.topk)
-                results.append((filename, img_results))
+            images_paths = load_folder_images_paths(args.folder)
+            print(f"Found {len(images_paths)} valid images. Running inference...")
+            results = predict_batch(images_paths, model, preprocess, classes, device, topk=args.topk)
 
             for filename, img_results in results:
                 print(f"\nResults for {filename}:")
